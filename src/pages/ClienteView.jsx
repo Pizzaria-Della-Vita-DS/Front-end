@@ -18,7 +18,11 @@ export default function ClienteView() {
 	const [modal, setModal] = useState({ isOpen: false, type: null, data: null });
 
 	const [sabores, setSabores] = useState([]);
-	const [tamanhos, setTamanhos] = useState([]);
+	const [tamanhos, setTamanhos] = useState([
+		{ id: 1, nome: 'Pequena', multiplicador: 1, maxSabores: 1 },
+		{ id: 2, nome: 'Média', multiplicador: 1.5, maxSabores: 2 },
+		{ id: 3, nome: 'Grande', multiplicador: 2, maxSabores: 3 },
+	]);
 	const [bordas, setBordas] = useState([]);
 	const [historico, setHistorico] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -26,15 +30,14 @@ export default function ClienteView() {
 	useEffect(() => {
 		const carregarDadosDaAPI = async () => {
 			try {
-				const [resSabores, resTamanhos, resBordas, resHistorico] = await Promise.all([
+				// 2. Remova o fetch do tamanho daqui (AQUI)
+				const [resSabores, resBordas, resHistorico] = await Promise.all([
 					fetch('http://localhost:8080/api/sabores'),
-					fetch('http://localhost:8080/api/tamanhos'),
 					fetch('http://localhost:8080/api/bordas'),
 					fetch('http://localhost:8080/api/pedidos/historico') 
 				]);
 
 				if (resSabores.ok) setSabores(await resSabores.json());
-				if (resTamanhos.ok) setTamanhos(await resTamanhos.json());
 				if (resBordas.ok) setBordas(await resBordas.json());
 				if (resHistorico.ok) setHistorico(await resHistorico.json());
 
@@ -475,7 +478,9 @@ export default function ClienteView() {
 								) : historico.map(hist => (
 									<tr key={hist.id} className="hover:bg-gray-50 transition-colors"> {/* AQUI: Vinculado ao campo id (Long) do backend */}
 										<td className="p-4 px-6 whitespace-nowrap text-gray-900">{hist.data_hora}</td> {/* AQUI: Ajustado para data_hora */}
-										<td className="p-4 px-6 text-gray-600 max-w-xs truncate">{hist.itens}</td>
+										<td className="p-4 px-6 text-gray-600 max-w-xs truncate">
+											{hist.pizzas ? hist.pizzas.map(p => `Pizza ${p.tamanho}`).join(', ') : 'Sem itens'} {/* AQUI */}
+										</td>
 										<td className="p-4 px-6">
 											<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
 												{hist.estado}

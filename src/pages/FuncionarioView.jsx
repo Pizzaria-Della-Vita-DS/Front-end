@@ -44,7 +44,7 @@ const Modals = ({
 		const payload = {
 			nome: saborForm.nome,
 			ingredientes_ids: saborForm.ingredientes.map(ing => ing.id || ing), 
-			preco: parseFloat(saborForm.preco) // AQUI
+			preco: parseFloat(saborForm.preco)
 		};
 
 		try {
@@ -112,14 +112,14 @@ const Modals = ({
 
 	const handleUpdateStatus = async () => {
 		try {
-			const response = await fetch(`http://localhost:8080/api/pedidos/${modal.data.id}/estado`, { // AQUI
+			const response = await fetch(`http://localhost:8080/api/pedidos/${modal.data.id}/estado`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ estado: estadoForm })
 			});
 
 			if (response.ok) {
-				setPedidos(pedidos.map(p => p.id === modal.data.id ? { ...p, estado: estadoForm } : p)); // AQUI
+				setPedidos(pedidos.map(p => p.id === modal.data.id ? { ...p, estado: estadoForm } : p));
 				closeModal();
 			} else {
 				alert("Erro ao atualizar o estado.");
@@ -183,8 +183,8 @@ const Modals = ({
 						{modal.type === 'estado-pedido' && 'Atualizar Estado do Pedido'}
 						{modal.type === 'detalhes-pedido' && 'Detalhes do Pedido'}
 						{modal.type === 'excluir' && 'Excluir Registo'}
-						{modal.type === 'ingrediente' && (modal.data ? 'Editar Ingrediente' : 'Novo Ingrediente')} {/* AQUI */}
-						{['borda'].includes(modal.type) && 'Funcionalidade em construção'} {/* AQUI */}
+						{modal.type === 'ingrediente' && (modal.data ? 'Editar Ingrediente' : 'Novo Ingrediente')}
+						{['borda'].includes(modal.type) && 'Funcionalidade em construção'}
 					</h3>
 					<button onClick={closeModal} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
 				</div>
@@ -212,31 +212,31 @@ const Modals = ({
 							</div>
 							<div>
 								<label className="block text-sm font-medium text-gray-700 mb-1">Preço Base (R$) *</label>
-								<input type="number" step="0.01" value={saborForm.preco} onChange={e=>setSaborForm({...saborForm, preco: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" placeholder="0.00"/> {/* AQUI */}
+								<input type="number" step="0.01" value={saborForm.preco} onChange={e=>setSaborForm({...saborForm, preco: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" placeholder="0.00"/>
 							</div>
 						</div>
 					)}
 
-					{modal.type === 'ingrediente' && ( // AQUI
-						<div className="space-y-4"> {/* AQUI */}
-							<div> {/* AQUI */}
-								<label className="block text-sm font-medium text-gray-700 mb-1">Nome do Ingrediente *</label> {/* AQUI */}
-								<input type="text" value={ingredienteForm.nome} onChange={e=>setIngredienteForm({...ingredienteForm, nome: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" placeholder="Ex: Queijo Mussarela"/> {/* AQUI */}
-							</div> {/* AQUI */}
-							<div> {/* AQUI */}
-								<label className="block text-sm font-medium text-gray-700 mb-1">Categoria *</label> {/* AQUI */}
-								<select value={ingredienteForm.categoria} onChange={(e) => setIngredienteForm({...ingredienteForm, categoria: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-red-600 bg-white"> {/* AQUI */}
-									<option value="LATICÍNIO">Laticínio</option> {/* AQUI */}
-									<option value="CARNE">Carne</option> {/* AQUI */}
-									<option value="EMBUTIDO">Embutido</option> {/* AQUI */}
-									<option value="VEGETAL">Vegetal</option> {/* AQUI */}
-									<option value="MOLHO">Molho</option> {/* AQUI */}
-									<option value="TEMPERO">Tempero</option> {/* AQUI */}
-									<option value="CONSERVA">Conserva</option> {/* AQUI */}
-								</select> {/* AQUI */}
-							</div> {/* AQUI */}
-						</div> {/* AQUI */}
-					)} {/* AQUI */}
+					{modal.type === 'ingrediente' && (
+						<div className="space-y-4">
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-1">Nome do Ingrediente *</label>
+								<input type="text" value={ingredienteForm.nome} onChange={e=>setIngredienteForm({...ingredienteForm, nome: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" placeholder="Ex: Queijo Mussarela"/>
+							</div>
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
+								<select value={ingredienteForm.categoria} onChange={(e) => setIngredienteForm({...ingredienteForm, categoria: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-red-600 bg-white">
+									<option value="LATICÍNIO">Laticínio</option>
+									<option value="CARNE">Carne</option>
+									<option value="EMBUTIDO">Embutido</option>
+									<option value="VEGETAL">Vegetal</option>
+									<option value="MOLHO">Molho</option>
+									<option value="TEMPERO">Tempero</option>
+									<option value="CONSERVA">Conserva</option>
+								</select>
+							</div>
+						</div>
+					)}
 
 					{modal.type === 'estado-pedido' && (
 						<div className="space-y-4">
@@ -275,7 +275,7 @@ const Modals = ({
 					<button onClick={closeModal} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-200 rounded-xl transition-colors">Cancelar</button>
 					
 					{modal.type === 'sabor' && <button onClick={handleSaveSabor} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Salvar Sabor</button>}
-					{modal.type === 'ingrediente' && <button onClick={handleSaveIngrediente} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Salvar Ingrediente</button>} {/* AQUI */}
+					{modal.type === 'ingrediente' && <button onClick={handleSaveIngrediente} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Salvar Ingrediente</button>}
 					{modal.type === 'estado-pedido' && <button onClick={handleUpdateStatus} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm">Atualizar Estado</button>}
 					{modal.type === 'excluir' && <button onClick={handleDelete} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Sim, excluir</button>}
 					{modal.type === 'detalhes-pedido' && <button onClick={closeModal} className="px-5 py-2.5 bg-gray-900 hover:bg-black text-white font-medium rounded-xl transition-colors">Fechar</button>}
@@ -341,16 +341,16 @@ export default function FuncionarioView() {
 	};
 
 	const handleToggleEstoque = async (ingrediente) => {
-		const novaDisponibilidade = !ingrediente.disponivel; // AQUI
+		const novaDisponibilidade = !ingrediente.disponivel;
 		try {
 			const res = await fetch(`http://localhost:8080/api/ingredientes/${ingrediente.id}/disponibilidade`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ disponivel: novaDisponibilidade }) // AQUI
+				body: JSON.stringify({ disponivel: novaDisponibilidade })
 			});
 			
 			if (res.ok) {
-				setIngredientes(ingredientes.map(i => i.id === ingrediente.id ? { ...i, disponivel: novaDisponibilidade } : i)); // AQUI
+				setIngredientes(ingredientes.map(i => i.id === ingrediente.id ? { ...i, disponivel: novaDisponibilidade } : i));
 			} else {
 				alert("Erro ao alterar o stock no servidor.");
 			}
@@ -456,7 +456,7 @@ export default function FuncionarioView() {
 											</thead>
 											<tbody className="divide-y divide-gray-100">
 												{pedidosFiltrados.map(p => (
-													<tr key={p.id} className="hover:bg-gray-50/80 transition-colors"> {/* AQUI */}
+													<tr key={p.id} className="hover:bg-gray-50/80 transition-colors">
 														<td className="p-4 px-6 font-medium text-gray-900">{p.data_hora}</td>
 														<td className="p-4 px-6 font-bold text-gray-900">{p.cliente}</td>
 														<td className="p-4 px-6 text-gray-600">{p.itens}</td>
@@ -588,7 +588,7 @@ export default function FuncionarioView() {
 										<thead className="bg-white text-gray-500 font-medium border-b border-gray-200 uppercase tracking-wider text-xs">
 											<tr>
 												<th className="p-4 px-6">Ingrediente</th>
-												<th className="p-4 px-6">Categoria</th> {/* AQUI */}
+												<th className="p-4 px-6">Categoria</th>
 												<th className="p-4 px-6 text-center">Status</th>
 												<th className="p-4 px-6 text-right">Ações</th>
 											</tr>
@@ -597,16 +597,16 @@ export default function FuncionarioView() {
 											{ingredientesFiltrados.map(i => (
 												<tr key={i.id} className="hover:bg-gray-50 transition-colors">
 													<td className="p-4 px-6 font-bold text-gray-900">{i.nome}</td>
-													<td className="p-4 px-6 text-gray-600">{i.categoria}</td> {/* AQUI */}
+													<td className="p-4 px-6 text-gray-600">{i.categoria}</td>
 													<td className="p-4 px-6 text-center">
-														{i.disponivel // AQUI
-															? <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800"><CheckCircle2 size={12} className="mr-1"/> Disponível</span> // AQUI
-															: <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800"><XCircle size={12} className="mr-1"/> Em falta</span> // AQUI
+														{i.disponivel 
+															? <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800"><CheckCircle2 size={12} className="mr-1"/> Disponível</span>
+															: <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800"><XCircle size={12} className="mr-1"/> Em falta</span>
 														}
 													</td>
 													<td className="p-4 px-6 text-right space-x-2">
-														<button onClick={() => handleToggleEstoque(i)} className={`px-3 py-1.5 rounded-lg font-medium text-xs transition-colors ${i.disponivel ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}`}> {/* AQUI */}
-															{i.disponivel ? 'Marcar falta' : 'Marcar reposto'} {/* AQUI */}
+														<button onClick={() => handleToggleEstoque(i)} className={`px-3 py-1.5 rounded-lg font-medium text-xs transition-colors ${i.disponivel ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}`}>
+															{i.disponivel ? 'Marcar falta' : 'Marcar reposto'}
 														</button>
 														<button onClick={() => openModal('ingrediente', i)} className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors"><Edit2 size={16} /></button>
 														<button onClick={() => openModal('excluir', { id: i.id, nome: i.nome, recurso: 'ingrediente' })} className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"><Trash2 size={16} /></button>
@@ -636,10 +636,10 @@ export default function FuncionarioView() {
 									<div className="space-y-6">
 										{[
 											{ label: 'Nome', value: 'João Pereira', edit: true }, 
-											{ label: 'E-mail (Login)', value: 'joao.pereira@pizzaria.com', edit: true }, // AQUI
+											{ label: 'E-mail (Login)', value: 'joao.pereira@pizzaria.com', edit: true },
 											{ label: 'Senha', value: '••••••••', edit: true },
 											{ label: 'CPF', value: '111.222.333-44' }, 
-											{ label: 'Telefone', value: '(53) 99999-8888', edit: true }, // AQUI
+											{ label: 'Telefone', value: '(53) 99999-8888', edit: true },
 											{ label: 'Data de Nascimento', value: '15/04/1985' },
 											{ label: 'RG', value: '3456789012' },
 											{ label: 'Gênero', value: 'Masculino' },
