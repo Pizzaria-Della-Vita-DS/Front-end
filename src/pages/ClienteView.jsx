@@ -26,15 +26,13 @@ export default function ClienteView() {
 	useEffect(() => {
 		const carregarDadosDaAPI = async () => {
 			try {
-				// Fazendo as requisições em paralelo para maior performance
 				const [resSabores, resTamanhos, resBordas, resHistorico] = await Promise.all([
 					fetch('http://localhost:8080/api/sabores'),
 					fetch('http://localhost:8080/api/tamanhos'),
 					fetch('http://localhost:8080/api/bordas'),
-					fetch('http://localhost:8080/api/pedidos/historico') // Exemplo de rota para histórico do cliente logado
+					fetch('http://localhost:8080/api/pedidos/historico') 
 				]);
 
-				// Se as requisições derem certo, preenchemos os estados
 				if (resSabores.ok) setSabores(await resSabores.json());
 				if (resTamanhos.ok) setTamanhos(await resTamanhos.json());
 				if (resBordas.ok) setBordas(await resBordas.json());
@@ -42,7 +40,6 @@ export default function ClienteView() {
 
 			} catch (erro) {
 				console.error("Falha ao buscar dados do Spring Boot:", erro);
-				alert("Não foi possível conectar ao servidor. Verifique se o Spring Boot está a correr.");
 			} finally {
 				setIsLoading(false);
 			}
@@ -51,12 +48,10 @@ export default function ClienteView() {
 		carregarDadosDaAPI();
 	}, []);
 
-	// Estados de montagem do pedido
 	const [builderSize, setBuilderSize] = useState(null);
 	const [builderFlavors, setBuilderFlavors] = useState([]);
 	const [builderBorder, setBuilderBorder] = useState(null);
 
-	// Estados de controle de entrega
 	const [userAddress, setUserAddress] = useState('Rua Garibaldi, 630 — Centro, Pelotas/RS');
 	const [deliveryOption, setDeliveryOption] = useState('retirada'); 
 	const [currentDeliveryAddress, setCurrentDeliveryAddress] = useState('');
@@ -68,7 +63,6 @@ export default function ClienteView() {
 	const openModal = (type, data = null) => setModal({ isOpen: true, type, data });
 	const closeModal = () => setModal({ isOpen: false, type: null, data: null });
 
-	// TELA 1: Cardápio
 	const MenuPage = () => (
 		<div className="max-w-5xl mx-auto p-6 animate-fade-in">
 			<div className="mb-8">
@@ -76,7 +70,6 @@ export default function ClienteView() {
 				<p className="text-gray-600 mt-2">Escolha um sabor e adicione ao seu pedido.</p>
 			</div>
 
-			{}
 			{isLoading ? (
 				<div className="text-center py-10 text-gray-500">Carregando cardápio...</div>
 			) : (
@@ -113,7 +106,6 @@ export default function ClienteView() {
 		</div>
 	);
 
-	// TELA 2: Fazer Pedido (Builder & Cart)
 	const OrderPage = () => {
 		
 		const handleFlavorToggle = (sabor) => {
@@ -147,7 +139,7 @@ export default function ClienteView() {
 				size: builderSize, 
 				flavors: builderFlavors, 
 				border: builderBorder, 
-				price: precoPizza 
+				price: parseFloat(precoPizza) // AQUI: Mantido como Double/Float para precisão centesimal
 			};
 
 			setCart([...cart, newItem]);
@@ -171,9 +163,7 @@ export default function ClienteView() {
 				</div>
 
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-					{/* Builder */}
 					<div className="lg:col-span-2 space-y-6">
-						{/* Step 1: Size */}
 						<div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
 							<h3 className="text-lg font-bold text-gray-900 mb-1">1. Tamanho</h3>
 							<p className="text-sm text-gray-500 mb-4">O tamanho define o multiplicador de preço e a quantidade de sabores.</p>
@@ -192,7 +182,6 @@ export default function ClienteView() {
 							</div>
 						</div>
 
-						{/* Step 2: Flavors */}
 						<div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
 							<div className="flex justify-between items-baseline mb-4">
 								<h3 className="text-lg font-bold text-gray-900 mb-1">2. Sabores</h3>
@@ -222,7 +211,6 @@ export default function ClienteView() {
 							</div>
 						</div>
 
-						{/* Step 3: Border */}
 						<div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
 							<h3 className="text-lg font-bold text-gray-900 mb-4">3. Borda (Opcional)</h3>
 							<div className="flex flex-wrap gap-3">
@@ -253,7 +241,6 @@ export default function ClienteView() {
 						</button>
 					</div>
 
-					{/* Sidebar Cart */}
 					<div>
 						<div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
 							<div className="flex justify-between items-center border-b border-gray-100 pb-4 mb-4">
@@ -356,7 +343,6 @@ export default function ClienteView() {
 		);
 	};
 
-	// TELA 3: Pagamento
 	const PaymentPage = () => {
 		const [payMethod, setPayMethod] = useState('PIX');
 		const taxaEntrega = deliveryOption === 'entrega' ? 7.00 : 0.00;
@@ -379,7 +365,6 @@ export default function ClienteView() {
 				</div>
 
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-					{/* Metodos */}
 					<div>
 						<h3 className="text-lg font-bold text-gray-900 mb-4">Forma de pagamento</h3>
 						<div className="space-y-3">
@@ -416,7 +401,6 @@ export default function ClienteView() {
 						</div>
 					</div>
 
-					{/* Revisão */}
 					<div>
 						<div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
 							<h3 className="text-lg font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4">Resumo do Pedido</h3>
@@ -465,7 +449,6 @@ export default function ClienteView() {
 		);
 	};
 
-	// TELA 4: Meus Pedidos
 	const HistoryPage = () => {
 		return (
 			<div className="max-w-5xl mx-auto p-6 animate-fade-in">
@@ -490,8 +473,8 @@ export default function ClienteView() {
 								{historico.length === 0 ? (
 									<tr><td colSpan="5" className="p-8 text-center text-gray-500">Nenhum pedido no histórico.</td></tr>
 								) : historico.map(hist => (
-									<tr key={hist.id} className="hover:bg-gray-50 transition-colors">
-										<td className="p-4 px-6 whitespace-nowrap text-gray-900">{hist.data}</td>
+									<tr key={hist.id} className="hover:bg-gray-50 transition-colors"> {/* AQUI: Vinculado ao campo id (Long) do backend */}
+										<td className="p-4 px-6 whitespace-nowrap text-gray-900">{hist.data_hora}</td> {/* AQUI: Ajustado para data_hora */}
 										<td className="p-4 px-6 text-gray-600 max-w-xs truncate">{hist.itens}</td>
 										<td className="p-4 px-6">
 											<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -499,7 +482,7 @@ export default function ClienteView() {
 											</span>
 										</td>
 										<td className="p-4 px-6 text-right font-bold text-gray-900 whitespace-nowrap">
-											{formatCurrency(hist.total)}
+											{formatCurrency(hist.preco_total)} {/* AQUI: Mapeado para preco_total */}
 										</td>
 										<td className="p-4 px-6 text-right">
 											<button 
@@ -528,7 +511,6 @@ export default function ClienteView() {
 		);
 	};
 
-	// TELA 5: Perfil
 	const ProfilePage = () => {
 		return (
 			<div className="max-w-3xl mx-auto p-6 animate-fade-in">
@@ -550,10 +532,13 @@ export default function ClienteView() {
 
 					<div className="space-y-6">
 						{[
-							{ label: 'Login', value: 'marina123' },
+							{ label: 'Nome', value: 'Marina Costa', edit: true },
+							{ label: 'E-mail (Login)', value: 'marina.costa@pizzaria.com', edit: true }, // AQUI: Unificado para bater com o Spring Security (username)
+							{ label: 'Senha', value: '••••••••', edit: true },
 							{ label: 'CPF', value: '123.456.789-00' },
-							{ label: 'Telefone', value: '(53) 99812-4455' },
-							{ label: 'Endereço', value: userAddress || 'Nenhum endereço cadastrado' } 
+							{ label: 'Gênero', value: 'Feminino' },
+							{ label: 'Telefone', value: '(53) 99812-4455', edit: true },
+							{ label: 'Endereço', value: userAddress || 'Nenhum endereço cadastrado', edit: true } 
 						].map((info, idx) => (
 							<div key={idx} className="flex justify-between items-center">
 								<div>
@@ -586,7 +571,6 @@ export default function ClienteView() {
 		);
 	};
 
-	// COMPONENTE: Modal Reutilizável
 	const Modals = () => {
 		const [tempAddress, setTempAddress] = useState('');
 		const [saveAsDefault, setSaveAsDefault] = useState(false);
@@ -610,7 +594,7 @@ export default function ClienteView() {
 					sabores_ids: item.flavors.map(f => f.id),
 					borda_id: item.border ? item.border.id : null
 				})),
-				preco_total: total
+				preco_total: parseFloat(total) // AQUI: Enviado como Double para o backend
 			};
 
 			try {
