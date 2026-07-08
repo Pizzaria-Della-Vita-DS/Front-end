@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
 	ClipboardList, 
 	Pizza, 
@@ -24,29 +24,46 @@ const Modals = ({
 }) => {
 	const [saborForm, setSaborForm] = useState({ nome: '', ingredientes: [], preco: '' });
 	const [estadoForm, setEstadoForm] = useState('');
-	const [ingredienteForm, setIngredienteForm] = useState({ nome: '', categoria: 'LATICÍNIO' }); // AQUI
+	const [ingredienteForm, setIngredienteForm] = useState({ nome: '' });
+
+	const nomeInputRef = useRef(null);
+	const [mensagemSucesso, setMensagemSucesso] = useState('');
+	const [salvando, setSalvando] = useState(false);
 
 	useMemo(() => {
-		if (modal.type === 'sabor') {
-			setSaborForm(modal.data ? { ...modal.data, preco: modal.data.preco.toString() } : { nome: '', ingredientes: [], preco: '' });
-		}
-		if (modal.type === 'estado-pedido') {
-			setEstadoForm(modal.data?.estado || 'Preparando');
-		}
-		if (modal.type === 'ingrediente') { // AQUI
-			setIngredienteForm(modal.data ? { ...modal.data } : { nome: '', categoria: 'LATICÍNIO' }); // AQUI
-		} // AQUI
+    	if (modal.type === 'sabor') {
+        	setSaborForm(modal.data ? { ...modal.data, preco: modal.data.preco.toString() } : { nome: '', ingredientes: [], preco: '' });
+    	}
+    	if (modal.type === 'estado-pedido') {
+	        setEstadoForm(modal.data?.estado || 'Preparando');
+	    }
+	    if (modal.type === 'ingrediente') {
+        	setIngredienteForm(modal.data ? { ...modal.data } : { nome: '' });
+    	}
+    	setMensagemSucesso(''); // limpa feedback de sucesso ao trocar/reabrir o modal
 	}, [modal.isOpen, modal.data, modal.type]);
+
+	useEffect(() => {
+    if (modal.isOpen && (modal.type === 'sabor' || modal.type === 'ingrediente')) {
+        const timer = setTimeout(() => {
+            nomeInputRef.current?.focus();
+            nomeInputRef.current?.select();
+        }, 50); // pequeno delay para não perder o foco durante a animação de entrada do modal
+        return () => clearTimeout(timer);
+    }
+}, [modal.isOpen, modal.type]);
 
 	const handleSaveSabor = async () => {
 		if (!saborForm.nome || !saborForm.preco) return alert('Preencha os campos obrigatórios.');
-		
+		if (salvando) return;
+
 		const payload = {
 			nome: saborForm.nome,
 			ingredientes_ids: saborForm.ingredientes.map(ing => ing.id || ing), 
 			preco: parseFloat(saborForm.preco)
 		};
 
+		setSalvando(true);
 		try {
 			const method = modal.data ? 'PUT' : 'POST';
 			const url = modal.data ? `http://localhost:8080/api/sabores/${modal.data.id}` : 'http://localhost:8080/api/sabores';
@@ -61,54 +78,65 @@ const Modals = ({
 				const saborSalvo = await response.json();
 				if (modal.data) {
 					setSabores(sabores.map(s => s.id === modal.data.id ? saborSalvo : s));
+					closeModal(); // edição: fecha normalmente
 				} else {
 					setSabores([...sabores, saborSalvo]);
+					setSaborForm({ nome: '', ingredientes: [], preco: '' });
+					setMensagemSucesso(`"${saborSalvo.nome}" cadastrado!`);
+					nomeInputRef.current?.focus();
 				}
-				closeModal();
 			} else {
 				alert("Erro ao salvar o sabor na base de dados.");
 			}
 		} catch (erro) {
 			console.error(erro);
 			alert("Falha de conexão com a API.");
+		} finally {
+			setSalvando(false);
 		}
 	};
 
-	const handleSaveIngrediente = async () => { // AQUI
-		if (!ingredienteForm.nome) return alert('Preencha o nome do ingrediente.'); // AQUI
-		
-		const payload = { // AQUI
-			nome: ingredienteForm.nome, // AQUI
-			categoria: ingredienteForm.categoria, // AQUI
-			disponivel: modal.data ? modal.data.disponivel : true // AQUI
-		}; // AQUI
+	const handleSaveIngrediente = async () => {
+		if (!ingredienteForm.nome) return alert('Preencha o nome do ingrediente.');
+		if (salvando) return;
 
-		try { // AQUI
-			const method = modal.data ? 'PUT' : 'POST'; // AQUI
-			const url = modal.data ? `http://localhost:8080/api/ingredientes/${modal.data.id}` : 'http://localhost:8080/api/ingredientes'; // AQUI
+		const payload = {
+			nome: ingredienteForm.nome,
+			disponivel: modal.data ? modal.data.disponivel : true
+		};
+
+		setSalvando(true);
+		try {
+			const method = modal.data ? 'PUT' : 'POST';
+			const url = modal.data ? `http://localhost:8080/api/ingredientes/${modal.data.id}` : 'http://localhost:8080/api/ingredientes';
 			
-			const response = await fetch(url, { // AQUI
-				method: method, // AQUI
-				headers: { 'Content-Type': 'application/json' }, // AQUI
-				body: JSON.stringify(payload) // AQUI
-			}); // AQUI
+			const response = await fetch(url, {
+				method: method,
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload)
+			});
 
-			if (response.ok) { // AQUI
-				const ingSalvo = await response.json(); // AQUI
-				if (modal.data) { // AQUI
-					setIngredientes(ingredientes.map(i => i.id === modal.data.id ? ingSalvo : i)); // AQUI
-				} else { // AQUI
-					setIngredientes([...ingredientes, ingSalvo]); // AQUI
-				} // AQUI
-				closeModal(); // AQUI
-			} else { // AQUI
-				alert("Erro ao salvar o ingrediente na base de dados."); // AQUI
-			} // AQUI
-		} catch (erro) { // AQUI
-			console.error(erro); // AQUI
-			alert("Falha de conexão com a API."); // AQUI
-		} // AQUI
-	}; // AQUI
+			if (response.ok) {
+				const ingSalvo = await response.json();
+				if (modal.data) {
+					setIngredientes(ingredientes.map(i => i.id === modal.data.id ? ingSalvo : i));
+					closeModal();
+				} else {
+					setIngredientes([...ingredientes, ingSalvo]);
+					setIngredienteForm({ nome: '' });
+					setMensagemSucesso(`"${ingSalvo.nome}" cadastrado! Pode inserir o próximo.`);
+					nomeInputRef.current?.focus();
+				}
+			} else {
+				alert("Erro ao salvar o ingrediente na base de dados.");
+			}
+		} catch (erro) {
+			console.error(erro);
+			alert("Falha de conexão com a API.");
+		} finally {
+			setSalvando(false);
+		}
+	};
 
 	const handleUpdateStatus = async () => {
 		try {
@@ -190,95 +218,109 @@ const Modals = ({
 				</div>
 
 				<div className="p-6 overflow-y-auto">
-					{modal.type === 'sabor' && (
-						<div className="space-y-4">
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-1">Nome da Pizza *</label>
-								<input type="text" value={saborForm.nome} onChange={e=>setSaborForm({...saborForm, nome: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" placeholder="Ex: Bacon com Cheddar"/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">Ingredientes (Selecione do Estoque)</label>
-								<div className="border-2 border-gray-200 rounded-xl p-3 max-h-40 overflow-y-auto grid grid-cols-2 gap-2">
-									{ingredientes.map(ing => {
-										const isChecked = saborForm.ingredientes.some(i => (i.id || i) === ing.id);
-										return (
-											<label key={ing.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-												<input type="checkbox" checked={isChecked} onChange={() => toggleIngredienteNoSabor(ing.id)} className="text-red-600 focus:ring-red-600 rounded"/>
-												{ing.nome}
-											</label>
-										);
-									})}
+						<div className="p-6 overflow-y-auto">
+							{mensagemSucesso && (
+								<div className="mb-4 flex items-center gap-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-2 animate-fade-in">
+									<CheckCircle2 size={16} />
+									{mensagemSucesso}
+								</div>
+							)}
+						{modal.type === 'sabor' && (
+							<div className="space-y-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">Nome da Pizza *</label>
+									<input 
+										type="text" 
+										ref={nomeInputRef}
+										value={saborForm.nome} 
+										onChange={e=>setSaborForm({...saborForm, nome: e.target.value})} 
+										onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveSabor(); } }}
+										className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" 
+										placeholder="Ex: Bacon com Cheddar"
+									/>
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Ingredientes (Selecione do Estoque)</label>
+									<div className="border-2 border-gray-200 rounded-xl p-3 max-h-40 overflow-y-auto grid grid-cols-2 gap-2">
+										{ingredientes.map(ing => {
+											const isChecked = saborForm.ingredientes.some(i => (i.id || i) === ing.id);
+											return (
+												<label key={ing.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+													<input type="checkbox" checked={isChecked} onChange={() => toggleIngredienteNoSabor(ing.id)} className="text-red-600 focus:ring-red-600 rounded"/>
+													{ing.nome}
+												</label>
+											);
+										})}
+									</div>
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">Preço Base (R$) *</label>
+									<input type="number" step="0.01" value={saborForm.preco} onChange={e=>setSaborForm({...saborForm, preco: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" placeholder="0.00"/>
 								</div>
 							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-1">Preço Base (R$) *</label>
-								<input type="number" step="0.01" value={saborForm.preco} onChange={e=>setSaborForm({...saborForm, preco: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" placeholder="0.00"/>
-							</div>
-						</div>
-					)}
+						)}
 
-					{modal.type === 'ingrediente' && (
-						<div className="space-y-4">
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-1">Nome do Ingrediente *</label>
-								<input type="text" value={ingredienteForm.nome} onChange={e=>setIngredienteForm({...ingredienteForm, nome: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" placeholder="Ex: Queijo Mussarela"/>
+						{modal.type === 'ingrediente' && (
+							<div className="space-y-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">Nome do Ingrediente *</label>
+									<input 
+										type="text" 
+										ref={nomeInputRef}
+										value={ingredienteForm.nome} 
+										onChange={e=>setIngredienteForm({...ingredienteForm, nome: e.target.value})} 
+										onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveIngrediente(); } }}
+										className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" 
+										placeholder="Ex: Queijo Mussarela"
+									/>
+								</div>
+								<div>
+								</div>
 							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
-								<select value={ingredienteForm.categoria} onChange={(e) => setIngredienteForm({...ingredienteForm, categoria: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-red-600 bg-white">
-									<option value="LATICÍNIO">Laticínio</option>
-									<option value="CARNE">Carne</option>
-									<option value="EMBUTIDO">Embutido</option>
-									<option value="VEGETAL">Vegetal</option>
-									<option value="MOLHO">Molho</option>
-									<option value="TEMPERO">Tempero</option>
-									<option value="CONSERVA">Conserva</option>
+						)}
+
+						{modal.type === 'estado-pedido' && (
+							<div className="space-y-4">
+								<p className="text-gray-600 text-sm">Atualizando o pedido do cliente <b>{modal.data.cliente}</b>.</p>
+								<select value={estadoForm} onChange={(e) => setEstadoForm(e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-red-600 bg-white">
+									<option value="Confirmando Pedido">Confirmando Pedido</option>
+									<option value="Preparando">Preparando</option>
+									<option value="Em rota">Em rota</option>
+									<option value="Entregue">Entregue</option>
+									<option value="Finalizado">Finalizado</option>
+									<option value="Cancelado">Cancelado</option>
 								</select>
 							</div>
-						</div>
-					)}
+						)}
 
-					{modal.type === 'estado-pedido' && (
-						<div className="space-y-4">
-							<p className="text-gray-600 text-sm">Atualizando o pedido do cliente <b>{modal.data.cliente}</b>.</p>
-							<select value={estadoForm} onChange={(e) => setEstadoForm(e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-red-600 bg-white">
-								<option value="Confirmando Pedido">Confirmando Pedido</option>
-								<option value="Preparando">Preparando</option>
-								<option value="Em rota">Em rota</option>
-								<option value="Entregue">Entregue</option>
-								<option value="Finalizado">Finalizado</option>
-								<option value="Cancelado">Cancelado</option>
-							</select>
-						</div>
-					)}
-
-					{modal.type === 'detalhes-pedido' && (
-						<div className="space-y-3 text-sm text-gray-700">
-							<div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-								<div className="mb-2"><span className="font-semibold text-gray-900">Cliente:</span> {modal.data.cliente}</div>
-								<div className="mb-2"><span className="font-semibold text-gray-900">Itens:</span> {modal.data.itens}</div>
-								<div className="mb-2"><span className="font-semibold text-gray-900">Data/Hora:</span> {modal.data.data_hora}</div>
-								<div><span className="font-semibold text-gray-900">Status atual:</span> <span className={`inline-flex px-2 py-0.5 rounded text-xs ${getEstadoColor(modal.data.estado)}`}>{modal.data.estado}</span></div>
+						{modal.type === 'detalhes-pedido' && (
+							<div className="space-y-3 text-sm text-gray-700">
+								<div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+									<div className="mb-2"><span className="font-semibold text-gray-900">Cliente:</span> {modal.data.cliente}</div>
+									<div className="mb-2"><span className="font-semibold text-gray-900">Itens:</span> {modal.data.itens}</div>
+									<div className="mb-2"><span className="font-semibold text-gray-900">Data/Hora:</span> {modal.data.data_hora}</div>
+									<div><span className="font-semibold text-gray-900">Status atual:</span> <span className={`inline-flex px-2 py-0.5 rounded text-xs ${getEstadoColor(modal.data.estado)}`}>{modal.data.estado}</span></div>
+								</div>
 							</div>
-						</div>
-					)}
+						)}
 
-					{modal.type === 'excluir' && (
-						<div>
-							<p className="text-gray-600 mb-2">Tem certeza que deseja excluir <b>{modal.data.nome}</b>?</p>
-							<p className="text-sm text-red-600 font-medium">Esta ação não poderá ser desfeita.</p>
-						</div>
-					)}
-				</div>
+						{modal.type === 'excluir' && (
+							<div>
+								<p className="text-gray-600 mb-2">Tem certeza que deseja excluir <b>{modal.data.nome}</b>?</p>
+								<p className="text-sm text-red-600 font-medium">Esta ação não poderá ser desfeita.</p>
+							</div>
+						)}
+					</div>
 
-				<div className="p-6 border-t border-gray-100 flex gap-3 justify-end bg-gray-50">
-					<button onClick={closeModal} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-200 rounded-xl transition-colors">Cancelar</button>
-					
-					{modal.type === 'sabor' && <button onClick={handleSaveSabor} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Salvar Sabor</button>}
-					{modal.type === 'ingrediente' && <button onClick={handleSaveIngrediente} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Salvar Ingrediente</button>}
-					{modal.type === 'estado-pedido' && <button onClick={handleUpdateStatus} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm">Atualizar Estado</button>}
-					{modal.type === 'excluir' && <button onClick={handleDelete} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Sim, excluir</button>}
-					{modal.type === 'detalhes-pedido' && <button onClick={closeModal} className="px-5 py-2.5 bg-gray-900 hover:bg-black text-white font-medium rounded-xl transition-colors">Fechar</button>}
+					<div className="p-6 border-t border-gray-100 flex gap-3 justify-end bg-gray-50">
+						<button onClick={closeModal} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-200 rounded-xl transition-colors">Cancelar</button>
+						
+						{modal.type === 'sabor' && <button onClick={handleSaveSabor} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Salvar Sabor</button>}
+						{modal.type === 'ingrediente' && <button onClick={handleSaveIngrediente} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Salvar Ingrediente</button>}
+						{modal.type === 'estado-pedido' && <button onClick={handleUpdateStatus} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm">Atualizar Estado</button>}
+						{modal.type === 'excluir' && <button onClick={handleDelete} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Sim, excluir</button>}
+						{modal.type === 'detalhes-pedido' && <button onClick={closeModal} className="px-5 py-2.5 bg-gray-900 hover:bg-black text-white font-medium rounded-xl transition-colors">Fechar</button>}
+					</div>
 				</div>
 			</div>
 		</div>
@@ -588,7 +630,6 @@ export default function FuncionarioView() {
 										<thead className="bg-white text-gray-500 font-medium border-b border-gray-200 uppercase tracking-wider text-xs">
 											<tr>
 												<th className="p-4 px-6">Ingrediente</th>
-												<th className="p-4 px-6">Categoria</th>
 												<th className="p-4 px-6 text-center">Status</th>
 												<th className="p-4 px-6 text-right">Ações</th>
 											</tr>
@@ -597,7 +638,6 @@ export default function FuncionarioView() {
 											{ingredientesFiltrados.map(i => (
 												<tr key={i.id} className="hover:bg-gray-50 transition-colors">
 													<td className="p-4 px-6 font-bold text-gray-900">{i.nome}</td>
-													<td className="p-4 px-6 text-gray-600">{i.categoria}</td>
 													<td className="p-4 px-6 text-center">
 														{i.disponivel 
 															? <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800"><CheckCircle2 size={12} className="mr-1"/> Disponível</span>
