@@ -1,4 +1,4 @@
-// src/pages/CadastroView.jsx
+
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Briefcase, Mail, Lock, Phone, MapPin, IdCard, Calendar, Building2, UserPlus, Eye, EyeOff } from 'lucide-react';
