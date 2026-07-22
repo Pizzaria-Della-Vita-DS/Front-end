@@ -91,7 +91,98 @@ const Modals = ({
 					nomeInputRef.current?.focus();
 				}
 			} else {
-				alert("Erro ao salvar o sabor na base de dados.");
+				
+				
+
+				const handleSaveSabor = async () => {
+					if (!saborForm.nome || !saborForm.preco) return alert('Preencha os campos obrigatórios.');
+					if (salvando) return;
+
+					const payload = {
+						nome: saborForm.nome,
+						ingredientes_ids: saborForm.ingredientes.map(ing => ing.id || ing), 
+						preco: parseFloat(saborForm.preco)
+					};
+
+					setSalvando(true);
+					try {
+						const method = modal.data ? 'PUT' : 'POST';
+						const url = modal.data ? `http://localhost:8080/api/sabores/${modal.data.id}` : 'http://localhost:8080/api/sabores';
+						
+						const response = await fetch(url, {
+							method: method,
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify(payload)
+						});
+
+						if (response.ok) {
+							const saborSalvo = await response.json();
+							if (modal.data) {
+								setSabores(sabores.map(s => s.id === modal.data.id ? saborSalvo : s));
+								closeModal(); // edição: fecha normalmente
+							} else {
+								setSabores([...sabores, saborSalvo]);
+								setSaborForm({ nome: '', ingredientes: [], preco: '' });
+								setMensagemSucesso(`"${saborSalvo.nome}" cadastrado!`);
+								nomeInputRef.current?.focus();
+							}
+						} else {
+							const erroBody = await response.json().catch(() => null);
+							alert(erroBody?.mensagem || "Erro ao salvar o sabor na base de dados.");
+						}
+					} catch (erro) {
+						console.error(erro);
+						alert("Falha de conexão com a API.");
+					} finally {
+						setSalvando(false);
+					}
+				};
+
+				const handleSaveIngrediente = async () => {
+					if (!ingredienteForm.nome) return alert('Preencha o nome do ingrediente.');
+					if (salvando) return;
+
+					const payload = {
+						nome: ingredienteForm.nome,
+						disponivel: modal.data ? modal.data.disponivel : true
+					};
+
+					setSalvando(true);
+					try {
+						const method = modal.data ? 'PUT' : 'POST';
+						const url = modal.data ? `http://localhost:8080/api/ingredientes/${modal.data.id}` : 'http://localhost:8080/api/ingredientes';
+						
+						const response = await fetch(url, {
+							method: method,
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify(payload)
+						});
+
+						if (response.ok) {
+							const ingSalvo = await response.json();
+							if (modal.data) {
+								setIngredientes(ingredientes.map(i => i.id === modal.data.id ? ingSalvo : i));
+								closeModal();
+							} else {
+								setIngredientes([...ingredientes, ingSalvo]);
+								setIngredienteForm({ nome: '' });
+								setMensagemSucesso(`"${ingSalvo.nome}" cadastrado! Pode inserir o próximo.`);
+								nomeInputRef.current?.focus();
+							}
+						} else {
+							const erroBody = await response.json().catch(() => null);
+							alert(erroBody?.mensagem || "Erro ao salvar o ingrediente na base de dados.");
+						}
+					} catch (erro) {
+						console.error(erro);
+						alert("Falha de conexão com a API.");
+					} finally {
+						setSalvando(false);
+					}
+				};
+
+
+
 			}
 		} catch (erro) {
 			console.error(erro);
