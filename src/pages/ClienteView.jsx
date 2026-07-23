@@ -1,7 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getUsuarioLogado, logout } from '../utils/auth';
-import React, { useState, useEffect } from 'react';
 import { 
 	Pizza, 
 	ShoppingCart, 
@@ -16,6 +13,8 @@ import {
 } from 'lucide-react';
 import Cardapio from '../components/Cardapio';
 import { formatCurrency } from '../utils/format';
+import { useNavigate } from 'react-router-dom';
+import { getUsuarioLogado, logout } from '../utils/auth';
 
 export default function ClienteView() {
 	const navigate = useNavigate();
