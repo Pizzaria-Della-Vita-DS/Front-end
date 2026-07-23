@@ -1,24 +1,26 @@
-
-import React from 'react';
+// src/pages/GerenteView.jsx
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PainelFuncionario from '../components/PainelFuncionario';
+import { getUsuarioLogado, montarPerfilFuncionario, logout } from '../utils/auth';
 
 export default function GerenteView() {
+	const navigate = useNavigate();
+	const usuario = getUsuarioLogado();
+
+	useEffect(() => {
+		if (!usuario || usuario.tipo !== 'funcionario' || usuario.funcao !== 'GERENTE') {
+			navigate('/login', { replace: true });
+		}
+	}, [usuario, navigate]);
+
+	if (!usuario || usuario.funcao !== 'GERENTE') return null;
+
 	return (
 		<PainelFuncionario
 			isGerente
-			perfil={{
-				nome: 'Ana Beatriz Souza',
-				inicial: 'A',
-				tipoLabel: 'Gerente',
-				cargo: 'Gerente Geral',
-				email: 'gerente@pizzaria.com',
-				cpf: '000.000.000-00',
-				telefone: '(53) 99900-0000',
-				dataNascimento: '01/01/1990',
-				rg: '0000000000',
-				genero: 'Feminino',
-				setor: 'Administração'
-			}}
+			perfil={montarPerfilFuncionario(usuario)}
+			onLogout={() => logout(navigate)}
 		/>
 	);
 }

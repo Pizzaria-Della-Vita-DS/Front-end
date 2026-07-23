@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getUsuarioLogado, logout } from '../utils/auth';
+import React, { useState, useEffect } from 'react';
 import { 
 	Pizza, 
 	ShoppingCart, 
@@ -15,6 +18,8 @@ import Cardapio from '../components/Cardapio';
 import { formatCurrency } from '../utils/format';
 
 export default function ClienteView() {
+	const navigate = useNavigate();
+	const usuario = getUsuarioLogado();
 	const [currentPage, setCurrentPage] = useState('cardapio');
 	const [cart, setCart] = useState([]);
 	const [modal, setModal] = useState({ isOpen: false, type: null, data: null });
@@ -28,6 +33,12 @@ export default function ClienteView() {
 	const [bordas, setBordas] = useState([]);
 	const [historico, setHistorico] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
+
+	useEffect(() => {
+		if (!usuario || usuario.tipo !== 'cliente') {
+			navigate('/login', { replace: true });
+		}
+	}, [usuario, navigate]);
 
 	useEffect(() => {
 		const carregarDadosDaAPI = async () => {
@@ -57,9 +68,12 @@ export default function ClienteView() {
 	const [builderFlavors, setBuilderFlavors] = useState([]);
 	const [builderBorder, setBuilderBorder] = useState(null);
 
-	const [userAddress, setUserAddress] = useState('Rua Garibaldi, 630 — Centro, Pelotas/RS');
+	const [userAddress, setUserAddress] = useState(usuario?.endereco || '');
 	const [deliveryOption, setDeliveryOption] = useState('retirada'); 
 	const [currentDeliveryAddress, setCurrentDeliveryAddress] = useState('');
+	
+
+
 
 	// Se o usuário veio da Landing Page e escolheu um sabor antes de logar,
 	// recuperamos essa seleção aqui, jogamos direto na aba de Pedido e limpamos o registro temporário.
@@ -497,6 +511,7 @@ export default function ClienteView() {
 		);
 	};
 
+
 	const ProfilePage = () => {
 		return (
 			<div className="max-w-3xl mx-auto p-6 animate-fade-in">
@@ -508,23 +523,23 @@ export default function ClienteView() {
 				<div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
 					<div className="flex items-center gap-6 border-b border-gray-100 pb-8 mb-8">
 						<div className="w-20 h-20 rounded-full bg-red-100 text-red-700 flex items-center justify-center text-3xl font-bold">
-							M
+							{	usuario?.nome?.charAt(0).toUpperCase()}
 						</div>
 						<div>
-							<h2 className="text-2xl font-bold text-gray-900">Marina Costa</h2>
-							<p className="text-gray-500">Cliente desde 2023</p>
+							<h2 className="text-2xl font-bold text-gray-900">{usuario?.nome}</h2>
+							<p className="text-gray-500">Cliente</p>
 						</div>
 					</div>
 
 					<div className="space-y-6">
 						{[
-							{ label: 'Nome', value: 'Marina Costa', edit: true },
-							{ label: 'E-mail (Login)', value: 'marina.costa@pizzaria.com', edit: true }, // AQUI: Unificado para bater com o Spring Security (username)
+							{ label: 'Nome', value: usuario?.nome, edit: true },
+							{ label: 'E-mail (Login)', value: usuario?.login, edit: true },
 							{ label: 'Senha', value: '••••••••', edit: true },
-							{ label: 'CPF', value: '123.456.789-00' },
-							{ label: 'Gênero', value: 'Feminino' },
-							{ label: 'Telefone', value: '(53) 99812-4455', edit: true },
-							{ label: 'Endereço', value: userAddress || 'Nenhum endereço cadastrado', edit: true } 
+							{ label: 'CPF', value: usuario?.cpf },
+							{ label: 'Gênero', value: usuario?.genero },
+							{ label: 'Telefone', value: usuario?.telefone, edit: true },
+							{ label: 'Endereço', value: userAddress || 'Nenhum endereço cadastrado', edit: true }
 						].map((info, idx) => (
 							<div key={idx} className="flex justify-between items-center">
 								<div>
@@ -728,16 +743,16 @@ export default function ClienteView() {
 							className="flex items-center gap-3 bg-black/10 hover:bg-black/20 px-3 py-1.5 rounded-full cursor-pointer transition-colors"
 						>
 							<div className="w-8 h-8 bg-white text-red-700 rounded-full flex items-center justify-center font-bold text-sm">
-								M
+							{usuario?.nome?.charAt(0).toUpperCase()}
 							</div>
 							<div className="hidden lg:block text-sm">
-								<div className="font-semibold leading-none">Marina Costa</div>
+								<div className="font-semibold leading-none">{usuario?.nome}</div>
 								<div className="text-[11px] text-red-100 mt-0.5">Cliente</div>
 							</div>
 						</div>
 						
-						<button className="p-2 text-red-100 hover:text-white hover:bg-white/10 rounded-full transition-colors" title="Sair">
-							<LogOut size={20} />
+						<button onClick={() => logout(navigate)} className="p-2 text-red-100 hover:text-white hover:bg-white/10 rounded-full transition-colors" title="Sair"> 
+							<LogOut size={20} /> 
 						</button>
 					</div>
 				</div>

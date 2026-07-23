@@ -501,7 +501,8 @@ export default function PainelFuncionario({
 		rg: '3456789012',
 		genero: 'Masculino',
 		setor: 'Cozinha'
-	}
+	},
+	onLogout = () => {}
 } = {}) {
 	const [currentPage, setCurrentPage] = useState('pedidos');
 	const [modal, setModal] = useState({ isOpen: false, type: null, data: null });
@@ -638,7 +639,9 @@ export default function PainelFuncionario({
 								<div className="text-[11px] text-red-100 mt-0.5">{perfil.tipoLabel}</div>
 							</div>
 						</div>
-						<button className="p-2 text-red-100 hover:text-white hover:bg-white/10 rounded-full transition-colors" title="Sair"><LogOut size={20} /></button>
+						<button onClick={onLogout}	className="p-2 text-red-100 hover:text-white hover:bg-white/10 rounded-full transition-colors"	title="Sair">
+						<LogOut size={20} />
+						</button>
 					</div>
 				</div>
 				
