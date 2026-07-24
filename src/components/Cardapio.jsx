@@ -20,7 +20,11 @@ export default function Cardapio({ sabores, isLoading, formatCurrency, onAdicion
 							<div className="p-5 flex flex-col justify-between flex-1">
 								<div>
 									<h4 className="text-lg font-bold text-gray-900">{sabor.nome}</h4>
-									<p className="text-sm text-gray-600 mt-1 line-clamp-2">{sabor.ingredientes}</p>
+									<p className="text-sm text-gray-600 mt-1 line-clamp-2">
+										{Array.isArray(sabor.ingredientes)
+											? sabor.ingredientes.map(i => i.nome).join(', ')
+											: sabor.ingredientes}
+									</p>
 								</div>
 								<div className="mt-4 flex justify-between items-center">
 									<span className="font-bold text-red-700">{formatCurrency(sabor.preco)}</span>
