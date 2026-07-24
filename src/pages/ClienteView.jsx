@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { 
-	Pizza, 
-	ShoppingCart, 
-	User, 
-	LogOut, 
-	CreditCard, 
-	Smartphone, 
-	Banknote, 
-	Edit2, 
+import {
+	Pizza,
+	ShoppingCart,
+	User,
+	LogOut,
+	CreditCard,
+	Smartphone,
+	Banknote,
+	Edit2,
 	Trash2,
 	CheckCircle2
 } from 'lucide-react';
 import Cardapio from '../components/Cardapio';
 import { formatCurrency } from '../utils/format';
 import { useNavigate } from 'react-router-dom';
-import { getUsuarioLogado, logout } from '../utils/auth';
+import { getUsuarioLogado, salvarUsuarioLogado, logout } from '../utils/auth';
 
 export default function ClienteView() {
 	const navigate = useNavigate();
-	const usuario = getUsuarioLogado();
+	const [usuario, setUsuario] = useState(getUsuarioLogado());
 	const [currentPage, setCurrentPage] = useState('cardapio');
 	const [cart, setCart] = useState([]);
 	const [modal, setModal] = useState({ isOpen: false, type: null, data: null });
@@ -46,7 +46,7 @@ export default function ClienteView() {
 				const [resSabores, resBordas, resHistorico] = await Promise.all([
 					fetch('http://localhost:8080/api/sabores'),
 					fetch('http://localhost:8080/api/bordas'),
-					fetch('http://localhost:8080/api/pedidos/historico') 
+					fetch('http://localhost:8080/api/pedidos/historico')
 				]);
 
 				if (resSabores.ok) setSabores(await resSabores.json());
@@ -68,9 +68,9 @@ export default function ClienteView() {
 	const [builderBorder, setBuilderBorder] = useState(null);
 
 	const [userAddress, setUserAddress] = useState(usuario?.endereco || '');
-	const [deliveryOption, setDeliveryOption] = useState('retirada'); 
+	const [deliveryOption, setDeliveryOption] = useState('retirada');
 	const [currentDeliveryAddress, setCurrentDeliveryAddress] = useState('');
-	
+
 
 
 
@@ -104,28 +104,28 @@ export default function ClienteView() {
 	};
 
 	const OrderPage = () => {
-		
+
 		const handleFlavorToggle = (sabor) => {
-			if (!builderSize) { 
+			if (!builderSize) {
 				alert('Por favor, selecione o tamanho da pizza primeiro.');
 				return;
 			}
-			
-			const isSelected = builderFlavors.some(f => f.id === sabor.id); 
+
+			const isSelected = builderFlavors.some(f => f.id === sabor.id);
 			if (isSelected) {
-				setBuilderFlavors(builderFlavors.filter(f => f.id !== sabor.id)); 
+				setBuilderFlavors(builderFlavors.filter(f => f.id !== sabor.id));
 			} else {
-				if (builderFlavors.length >= builderSize.maxSabores) { 
-					alert(`O tamanho ${builderSize.nome} permite no máximo ${builderSize.maxSabores} sabor(es).`); 
+				if (builderFlavors.length >= builderSize.maxSabores) {
+					alert(`O tamanho ${builderSize.nome} permite no máximo ${builderSize.maxSabores} sabor(es).`);
 					return;
 				}
-				setBuilderFlavors([...builderFlavors, sabor]); 
+				setBuilderFlavors([...builderFlavors, sabor]);
 			}
 		};
 
 		const handleAddToCart = () => {
-			if (!builderSize) return alert('Escolha o tamanho da pizza.'); 
-			if (builderFlavors.length === 0) return alert('Escolha pelo menos um sabor.'); 
+			if (!builderSize) return alert('Escolha o tamanho da pizza.');
+			if (builderFlavors.length === 0) return alert('Escolha pelo menos um sabor.');
 
 			const somaPrecos = builderFlavors.reduce((acc, sabor) => acc + sabor.preco, 0);
 			const precoProporcional = somaPrecos / builderFlavors.length;
@@ -133,17 +133,17 @@ export default function ClienteView() {
 
 			const newItem = {
 				id: Date.now(),
-				size: builderSize, 
-				flavors: builderFlavors, 
-				border: builderBorder, 
+				size: builderSize,
+				flavors: builderFlavors,
+				border: builderBorder,
 				price: parseFloat(precoPizza) // AQUI: Mantido como Double/Float para precisão centesimal
 			};
 
 			setCart([...cart, newItem]);
-			
-			setBuilderSize(null); 
-			setBuilderFlavors([]); 
-			setBuilderBorder(null); 
+
+			setBuilderSize(null);
+			setBuilderFlavors([]);
+			setBuilderBorder(null);
 		};
 
 		const removeFromCart = (idToRemove) => {
@@ -166,10 +166,10 @@ export default function ClienteView() {
 							<p className="text-sm text-gray-500 mb-4">O tamanho define o multiplicador de preço e a quantidade de sabores.</p>
 							<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 								{tamanhos.map(t => (
-									<div 
+									<div
 										key={t.id}
-										onClick={() => { setBuilderSize(t); setBuilderFlavors([]); }} 
-										className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${builderSize?.id === t.id ? 'border-red-600 bg-red-50' : 'border-gray-200 hover:border-red-300'}`} 
+										onClick={() => { setBuilderSize(t); setBuilderFlavors([]); }}
+										className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${builderSize?.id === t.id ? 'border-red-600 bg-red-50' : 'border-gray-200 hover:border-red-300'}`}
 									>
 										<div className="font-bold text-gray-900">{t.nome}</div>
 										<div className="text-xs text-gray-500 mt-1">Multiplicador: {t.multiplicador}x</div>
@@ -188,9 +188,9 @@ export default function ClienteView() {
 							</div>
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 								{sabores.map(s => {
-									const isSelected = builderFlavors.some(f => f.id === s.id); 
+									const isSelected = builderFlavors.some(f => f.id === s.id);
 									return (
-										<div 
+										<div
 											key={s.id}
 											onClick={() => handleFlavorToggle(s)}
 											className={`p-3 rounded-xl border-2 cursor-pointer flex items-center gap-3 transition-all ${isSelected ? 'border-red-600 bg-red-50' : 'border-gray-200 hover:bg-gray-50'}`}
@@ -211,17 +211,17 @@ export default function ClienteView() {
 						<div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
 							<h3 className="text-lg font-bold text-gray-900 mb-4">3. Borda (Opcional)</h3>
 							<div className="flex flex-wrap gap-3">
-								<div 
+								<div
 									onClick={() => setBuilderBorder(null)}
 									className={`px-4 py-2 rounded-full border-2 cursor-pointer text-sm font-medium transition-all ${!builderBorder ? 'border-red-600 bg-red-600 text-white' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`}
 								>
 									Tradicional (Sem recheio)
 								</div>
 								{bordas.map(b => (
-									<div 
+									<div
 										key={b.id}
-										onClick={() => setBuilderBorder(b)} 
-										className={`px-4 py-2 rounded-full border-2 cursor-pointer text-sm font-medium transition-all ${builderBorder?.id === b.id ? 'border-red-600 bg-red-600 text-white' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`} 
+										onClick={() => setBuilderBorder(b)}
+										className={`px-4 py-2 rounded-full border-2 cursor-pointer text-sm font-medium transition-all ${builderBorder?.id === b.id ? 'border-red-600 bg-red-600 text-white' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`}
 									>
 										{b.nome} {b.preco > 0 && `(+ ${formatCurrency(b.preco)})`}
 									</div>
@@ -229,7 +229,7 @@ export default function ClienteView() {
 							</div>
 						</div>
 
-						<button 
+						<button
 							onClick={handleAddToCart}
 							className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-md hover:shadow-lg transition-all flex justify-center items-center gap-2"
 						>
@@ -268,7 +268,7 @@ export default function ClienteView() {
 													<span className="font-semibold">Borda:</span> {item.border.nome}
 												</div>
 											)}
-											<button 
+											<button
 												onClick={() => removeFromCart(item.id)}
 												className="text-red-500 text-xs font-medium mt-3 hover:text-red-700 flex items-center gap-1"
 											>
@@ -289,13 +289,13 @@ export default function ClienteView() {
 									<div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
 										<h4 className="font-semibold text-gray-900 text-sm mb-3">Opções de Recebimento</h4>
 										<div className="flex gap-2 mb-3">
-											<button 
+											<button
 												onClick={() => setDeliveryOption('retirada')}
 												className={`flex-1 py-2 text-xs font-bold rounded-lg border-2 transition-all ${deliveryOption === 'retirada' ? 'border-red-600 bg-red-50 text-red-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
 											>
 												Retirada local
 											</button>
-											<button 
+											<button
 												onClick={() => {
 													setDeliveryOption('entrega');
 													if (userAddress && !currentDeliveryAddress) setCurrentDeliveryAddress(userAddress);
@@ -305,7 +305,7 @@ export default function ClienteView() {
 												Com entrega
 											</button>
 										</div>
-										
+
 										{deliveryOption === 'entrega' && (
 											<div className="mt-2">
 												{currentDeliveryAddress ? (
@@ -321,10 +321,10 @@ export default function ClienteView() {
 									</div>
 								)}
 
-								<button 
+								<button
 									onClick={() => {
-										if(cart.length === 0) return alert('Adicione itens ao carrinho primeiro.');
-										if(deliveryOption === 'entrega' && !currentDeliveryAddress) return alert('Por favor, insira o endereço de entrega antes de prosseguir.');
+										if (cart.length === 0) return alert('Adicione itens ao carrinho primeiro.');
+										if (deliveryOption === 'entrega' && !currentDeliveryAddress) return alert('Por favor, insira o endereço de entrega antes de prosseguir.');
 										setCurrentPage('pagamento');
 									}}
 									disabled={cart.length === 0}
@@ -366,7 +366,7 @@ export default function ClienteView() {
 						<h3 className="text-lg font-bold text-gray-900 mb-4">Forma de pagamento</h3>
 						<div className="space-y-3">
 							{methods.map(m => (
-								<div 
+								<div
 									key={m.id}
 									onClick={() => setPayMethod(m.id)}
 									className={`p-4 rounded-xl border-2 cursor-pointer flex items-center gap-4 transition-all ${payMethod === m.id ? 'border-red-600 bg-red-50' : 'border-gray-200 hover:bg-gray-50'}`}
@@ -383,13 +383,13 @@ export default function ClienteView() {
 						</div>
 
 						<div className="mt-8 flex gap-4">
-							<button 
+							<button
 								onClick={() => setCurrentPage('pedido')}
 								className="flex-1 bg-white border border-gray-300 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 transition-all"
 							>
 								Voltar
 							</button>
-							<button 
+							<button
 								onClick={() => openModal('confirmacao', { payMethod, total })}
 								className="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 shadow-md transition-all"
 							>
@@ -401,7 +401,7 @@ export default function ClienteView() {
 					<div>
 						<div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
 							<h3 className="text-lg font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4">Resumo do Pedido</h3>
-							
+
 							<div className="space-y-4 mb-6">
 								{cart.map(item => (
 									<div key={item.id} className="flex justify-between items-start text-sm">
@@ -419,7 +419,7 @@ export default function ClienteView() {
 									<span>Subtotal</span>
 									<span>{formatCurrency(subtotal)}</span>
 								</div>
-								
+
 								{deliveryOption === 'entrega' && (
 									<div className="flex justify-between text-sm text-gray-600">
 										<span>Taxa de Entrega</span>
@@ -484,9 +484,9 @@ export default function ClienteView() {
 											{formatCurrency(hist.preco_total)} {/* AQUI: Mapeado para preco_total */}
 										</td>
 										<td className="p-4 px-6 text-right">
-											<button 
+											<button
 												onClick={() => {
-													if(hist.pizzas) {
+													if (hist.pizzas) {
 														const novosItens = hist.pizzas.map((pizza, index) => ({
 															...pizza,
 															id: Date.now() + index
@@ -522,7 +522,7 @@ export default function ClienteView() {
 				<div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
 					<div className="flex items-center gap-6 border-b border-gray-100 pb-8 mb-8">
 						<div className="w-20 h-20 rounded-full bg-red-100 text-red-700 flex items-center justify-center text-3xl font-bold">
-							{	usuario?.nome?.charAt(0).toUpperCase()}
+							{usuario?.nome?.charAt(0).toUpperCase()}
 						</div>
 						<div>
 							<h2 className="text-2xl font-bold text-gray-900">{usuario?.nome}</h2>
@@ -545,8 +545,8 @@ export default function ClienteView() {
 									<div className="text-sm font-medium text-gray-500">{info.label}</div>
 									<div className="text-base text-gray-900 mt-1">{info.value}</div>
 								</div>
-								<button 
-									onClick={() => openModal('editar', info.label)}
+								<button
+									onClick={() => openModal('editar-perfil')}
 									className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
 								>
 									<Edit2 size={18} />
@@ -574,17 +574,31 @@ export default function ClienteView() {
 	const Modals = () => {
 		const [tempAddress, setTempAddress] = useState('');
 		const [saveAsDefault, setSaveAsDefault] = useState(false);
+		const [perfilForm, setPerfilForm] = useState({ nome: '', login: '', telefone: '', endereco: '', senha: '', confirmarSenha: '' });
+		const [erroPerfil, setErroPerfil] = useState('');
+		const [salvandoPerfil, setSalvandoPerfil] = useState(false);
 
 		useEffect(() => {
 			if (modal.type === 'endereco') {
 				setTempAddress(currentDeliveryAddress || userAddress || '');
 				setSaveAsDefault(false);
 			}
+			if (modal.type === 'editar-perfil') {
+				setPerfilForm({
+					nome: usuario?.nome || '',
+					login: usuario?.login || '',
+					telefone: usuario?.telefone || '',
+					endereco: userAddress || '',
+					senha: '',
+					confirmarSenha: ''
+				});
+				setErroPerfil('');
+			}
 		}, [modal.isOpen, modal.type]);
 
 		const handleFinalizarPost = async () => {
 			const { payMethod, total } = modal.data;
-			
+
 			const novoPedido = {
 				forma_pagamento: payMethod,
 				endereco_entrega: deliveryOption === 'entrega' ? currentDeliveryAddress : null,
@@ -622,7 +636,7 @@ export default function ClienteView() {
 		return (
 			<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 animate-fade-in">
 				<div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-slide-up">
-					
+
 					{modal.type === 'confirmacao' && (
 						<div className="p-8 text-center">
 							<h3 className="text-2xl font-bold text-gray-900 mb-2">Confirmar Pedido</h3>
@@ -639,18 +653,18 @@ export default function ClienteView() {
 							<h3 className="text-xl font-bold text-gray-900 mb-4">Endereço de Entrega</h3>
 							<div className="mb-4">
 								<label className="block text-sm font-medium text-gray-700 mb-2">Informe o endereço completo</label>
-								<input 
-									type="text" 
+								<input
+									type="text"
 									value={tempAddress}
 									onChange={(e) => setTempAddress(e.target.value)}
 									placeholder="Ex: Rua Assis Brasil, 123 - Centro"
-									className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-red-600 focus:ring-4 focus:ring-red-600/10 transition-all" 
+									className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-red-600 focus:ring-4 focus:ring-red-600/10 transition-all"
 								/>
 							</div>
 							<div className="flex items-center gap-2 mb-6">
-								<input 
-									type="checkbox" 
-									id="saveDefault" 
+								<input
+									type="checkbox"
+									id="saveDefault"
 									checked={saveAsDefault}
 									onChange={(e) => setSaveAsDefault(e.target.checked)}
 									className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-600"
@@ -659,13 +673,13 @@ export default function ClienteView() {
 							</div>
 							<div className="flex gap-3 justify-end">
 								<button onClick={closeModal} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors">Cancelar</button>
-								<button 
+								<button
 									onClick={() => {
-										if(!tempAddress.trim()) return alert('Preencha o endereço.');
+										if (!tempAddress.trim()) return alert('Preencha o endereço.');
 										setCurrentDeliveryAddress(tempAddress);
-										if (saveAsDefault) setUserAddress(tempAddress); 
+										if (saveAsDefault) setUserAddress(tempAddress);
 										closeModal();
-									}} 
+									}}
 									className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors"
 								>
 									Confirmar Endereço
@@ -674,16 +688,46 @@ export default function ClienteView() {
 						</div>
 					)}
 
-					{modal.type === 'editar' && (
+
+					{modal.type === 'editar-perfil' && (
 						<div className="p-6">
-							<h3 className="text-xl font-bold text-gray-900 mb-4">Editar {modal.data}</h3>
-							<div className="mb-6">
-								<label className="block text-sm font-medium text-gray-700 mb-2">Novo valor</label>
-								<input type="text" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-red-600 focus:ring-4 focus:ring-red-600/10 transition-all" />
+							<h3 className="text-xl font-bold text-gray-900 mb-4">Editar Perfil</h3>
+							<div className="space-y-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Nome</label>
+									<input type="text" value={perfilForm.nome} onChange={(e) => setPerfilForm({ ...perfilForm, nome: e.target.value })} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-red-600 transition-all" />
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">E-mail (login)</label>
+									<input type="email" value={perfilForm.login} onChange={(e) => setPerfilForm({ ...perfilForm, login: e.target.value })} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-red-600 transition-all" />
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+									<input type="text" value={perfilForm.telefone} onChange={(e) => setPerfilForm({ ...perfilForm, telefone: e.target.value })} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-red-600 transition-all" />
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Endereço</label>
+									<input type="text" value={perfilForm.endereco} onChange={(e) => setPerfilForm({ ...perfilForm, endereco: e.target.value })} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-red-600 transition-all" />
+								</div>
+								<div className="grid grid-cols-2 gap-4">
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-2">Nova senha</label>
+										<input type="password" value={perfilForm.senha} onChange={(e) => setPerfilForm({ ...perfilForm, senha: e.target.value })} placeholder="Deixe em branco p/ não alterar" className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-red-600 transition-all" />
+									</div>
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-2">Confirmar senha</label>
+										<input type="password" value={perfilForm.confirmarSenha} onChange={(e) => setPerfilForm({ ...perfilForm, confirmarSenha: e.target.value })} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-red-600 transition-all" />
+									</div>
+								</div>
+								{erroPerfil && (
+									<div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">{erroPerfil}</div>
+								)}
 							</div>
-							<div className="flex gap-3 justify-end">
+							<div className="flex gap-3 justify-end mt-6">
 								<button onClick={closeModal} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors">Cancelar</button>
-								<button onClick={closeModal} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors">Salvar</button>
+								<button onClick={handleSalvarPerfil} disabled={salvandoPerfil} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-medium rounded-xl transition-colors">
+									{salvandoPerfil ? 'Salvando...' : 'Salvar Alterações'}
+								</button>
 							</div>
 						</div>
 					)}
@@ -706,10 +750,10 @@ export default function ClienteView() {
 
 	return (
 		<div className="min-h-screen bg-gray-50/50 font-sans text-gray-900">
-			
+
 			<header className="sticky top-0 z-40 bg-red-700 text-white shadow-md">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center h-16">
-					
+
 					<div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentPage('cardapio')}>
 						<div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-red-700 font-serif font-bold italic text-lg shadow-sm">
 							DV
@@ -737,25 +781,25 @@ export default function ClienteView() {
 					</nav>
 
 					<div className="flex items-center gap-4">
-						<div 
+						<div
 							onClick={() => setCurrentPage('perfil')}
 							className="flex items-center gap-3 bg-black/10 hover:bg-black/20 px-3 py-1.5 rounded-full cursor-pointer transition-colors"
 						>
 							<div className="w-8 h-8 bg-white text-red-700 rounded-full flex items-center justify-center font-bold text-sm">
-							{usuario?.nome?.charAt(0).toUpperCase()}
+								{usuario?.nome?.charAt(0).toUpperCase()}
 							</div>
 							<div className="hidden lg:block text-sm">
 								<div className="font-semibold leading-none">{usuario?.nome}</div>
 								<div className="text-[11px] text-red-100 mt-0.5">Cliente</div>
 							</div>
 						</div>
-						
-						<button onClick={() => logout(navigate)} className="p-2 text-red-100 hover:text-white hover:bg-white/10 rounded-full transition-colors" title="Sair"> 
-							<LogOut size={20} /> 
+
+						<button onClick={() => logout(navigate)} className="p-2 text-red-100 hover:text-white hover:bg-white/10 rounded-full transition-colors" title="Sair">
+							<LogOut size={20} />
 						</button>
 					</div>
 				</div>
-				
+
 				<nav className="md:hidden flex w-full border-t border-red-600/50 bg-red-700 overflow-x-auto">
 					{[
 						{ id: 'cardapio', label: 'Cardápio' },
@@ -775,11 +819,11 @@ export default function ClienteView() {
 
 			<main className="pb-24">
 				{currentPage === 'cardapio' && (
-					<Cardapio 
-						sabores={sabores} 
-						isLoading={isLoading} 
-						formatCurrency={formatCurrency} 
-						onAdicionar={handleAdicionarSabor} 
+					<Cardapio
+						sabores={sabores}
+						isLoading={isLoading}
+						formatCurrency={formatCurrency}
+						onAdicionar={handleAdicionarSabor}
 					/>
 				)}
 				{currentPage === 'pedido' && <OrderPage />}
@@ -793,3 +837,55 @@ export default function ClienteView() {
 		</div>
 	);
 }
+
+
+const handleSalvarPerfil = async () => {
+	if (!perfilForm.nome || !perfilForm.login || !perfilForm.telefone) {
+		setErroPerfil('Preencha nome, e-mail e telefone.');
+		return;
+	}
+	if (perfilForm.senha && perfilForm.senha.length < 6) {
+		setErroPerfil('A nova senha deve ter pelo menos 6 caracteres.');
+		return;
+	}
+	if (perfilForm.senha && perfilForm.senha !== perfilForm.confirmarSenha) {
+		setErroPerfil('As senhas não coincidem.');
+		return;
+	}
+
+	const payload = {
+		nome: perfilForm.nome,
+		login: perfilForm.login,
+		telefone: perfilForm.telefone,
+		endereco: perfilForm.endereco,
+		genero: usuario?.genero
+	};
+	if (perfilForm.senha) payload.senha = perfilForm.senha;
+
+	setSalvandoPerfil(true);
+	setErroPerfil('');
+	try {
+		const response = await fetch(`http://localhost:8080/api/clientes/${usuario.cpf}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		});
+
+		if (response.ok) {
+			const atualizado = await response.json();
+			setUsuario(atualizado);
+			salvarUsuarioLogado(atualizado);
+			setUserAddress(atualizado.endereco || '');
+			closeModal();
+		} else if (response.status === 409) {
+			setErroPerfil('Já existe um cadastro com este e-mail.');
+		} else {
+			setErroPerfil('Não foi possível salvar as alterações.');
+		}
+	} catch (erro) {
+		console.error(erro);
+		setErroPerfil('Erro de conexão com o servidor.');
+	} finally {
+		setSalvandoPerfil(false);
+	}
+};

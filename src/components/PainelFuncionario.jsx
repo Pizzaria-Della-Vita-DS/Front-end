@@ -1,32 +1,38 @@
 // src/components/PainelFuncionario.jsx
+import { getUsuarioLogado, salvarUsuarioLogado } from '../utils/auth';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { 
-	ClipboardList, 
-	Pizza, 
-	CircleDashed, 
-	Box, 
-	LogOut, 
-	Search, 
-	Edit2, 
-	Trash2, 
-	RefreshCw, 
-	CheckCircle2, 
-	XCircle, 
+import {
+	ClipboardList,
+	Pizza,
+	CircleDashed,
+	Box,
+	LogOut,
+	Search,
+	Edit2,
+	Trash2,
+	RefreshCw,
+	CheckCircle2,
+	XCircle,
 	X,
 	Users,
 	Clock
 } from 'lucide-react';
+import { montarPerfilFuncionario, salvarUsuarioLogado } from '../utils/auth';
 
-const Modals = ({ 
-	modal, 
-	closeModal, 
-	sabores, setSabores, 
-	bordas, setBordas, 
-	ingredientes, setIngredientes, 
+const Modals = ({
+	modal,
+	closeModal,
+	sabores, setSabores,
+	bordas, setBordas,
+	ingredientes, setIngredientes,
 	pedidos, setPedidos,
 	funcionariosAtivos, setFuncionariosAtivos,
-	funcionariosPendentes, setFuncionariosPendentes
+	funcionariosPendentes, setFuncionariosPendentes,
+	perfilFuncionario, onPerfilAtualizado
 }) => {
+	const [perfilForm, setPerfilForm] = useState({ nome: '', login: '', telefone: '', senha: '', confirmarSenha: '' });
+	const [erroPerfil, setErroPerfil] = useState('');
+	const [salvandoPerfil, setSalvandoPerfil] = useState(false);
 	const [saborForm, setSaborForm] = useState({ nome: '', ingredientes: [], preco: '' });
 	const [estadoForm, setEstadoForm] = useState('');
 	const [ingredienteForm, setIngredienteForm] = useState({ nome: '' });
@@ -36,27 +42,37 @@ const Modals = ({
 	const [salvando, setSalvando] = useState(false);
 
 	useMemo(() => {
-    	if (modal.type === 'sabor') {
-        	setSaborForm(modal.data ? { ...modal.data, preco: modal.data.preco.toString() } : { nome: '', ingredientes: [], preco: '' });
-    	}
-    	if (modal.type === 'estado-pedido') {
-	        setEstadoForm(modal.data?.estado || 'Preparando');
-	    }
-	    if (modal.type === 'ingrediente') {
-        	setIngredienteForm(modal.data ? { ...modal.data } : { nome: '' });
-    	}
-    	setMensagemSucesso(''); // limpa feedback de sucesso ao trocar/reabrir o modal
+		if (modal.type === 'sabor') {
+			setSaborForm(modal.data ? { ...modal.data, preco: modal.data.preco.toString() } : { nome: '', ingredientes: [], preco: '' });
+		}
+		if (modal.type === 'estado-pedido') {
+			setEstadoForm(modal.data?.estado || 'Preparando');
+		}
+		if (modal.type === 'ingrediente') {
+			setIngredienteForm(modal.data ? { ...modal.data } : { nome: '' });
+		}
+		if (modal.type === 'editar-perfil-funcionario') {
+			setPerfilForm({
+				nome: perfilFuncionario?.nome || '',
+				login: perfilFuncionario?.email || '',
+				telefone: perfilFuncionario?.telefone || '',
+				senha: '',
+				confirmarSenha: ''
+			});
+			setErroPerfil('');
+		}
+		setMensagemSucesso(''); // limpa feedback de sucesso ao trocar/reabrir o modal
 	}, [modal.isOpen, modal.data, modal.type]);
 
 	useEffect(() => {
-    if (modal.isOpen && (modal.type === 'sabor' || modal.type === 'ingrediente')) {
-        const timer = setTimeout(() => {
-            nomeInputRef.current?.focus();
-            nomeInputRef.current?.select();
-        }, 50); // pequeno delay para não perder o foco durante a animação de entrada do modal
-        return () => clearTimeout(timer);
-    }
-}, [modal.isOpen, modal.type]);
+		if (modal.isOpen && (modal.type === 'sabor' || modal.type === 'ingrediente')) {
+			const timer = setTimeout(() => {
+				nomeInputRef.current?.focus();
+				nomeInputRef.current?.select();
+			}, 50); // pequeno delay para não perder o foco durante a animação de entrada do modal
+			return () => clearTimeout(timer);
+		}
+	}, [modal.isOpen, modal.type]);
 
 	const handleSaveSabor = async () => {
 		if (!saborForm.nome || !saborForm.preco) return alert('Preencha os campos obrigatórios.');
@@ -64,7 +80,7 @@ const Modals = ({
 
 		const payload = {
 			nome: saborForm.nome,
-			ingredientes_ids: saborForm.ingredientes.map(ing => ing.id || ing), 
+			ingredientes_ids: saborForm.ingredientes.map(ing => ing.id || ing),
 			preco: parseFloat(saborForm.preco)
 		};
 
@@ -72,7 +88,7 @@ const Modals = ({
 		try {
 			const method = modal.data ? 'PUT' : 'POST';
 			const url = modal.data ? `http://localhost:8080/api/sabores/${modal.data.id}` : 'http://localhost:8080/api/sabores';
-			
+
 			const response = await fetch(url, {
 				method: method,
 				headers: { 'Content-Type': 'application/json' },
@@ -91,8 +107,8 @@ const Modals = ({
 					nomeInputRef.current?.focus();
 				}
 			} else {
-				
-				
+
+
 
 				const handleSaveSabor = async () => {
 					if (!saborForm.nome || !saborForm.preco) return alert('Preencha os campos obrigatórios.');
@@ -100,7 +116,7 @@ const Modals = ({
 
 					const payload = {
 						nome: saborForm.nome,
-						ingredientes_ids: saborForm.ingredientes.map(ing => ing.id || ing), 
+						ingredientes_ids: saborForm.ingredientes.map(ing => ing.id || ing),
 						preco: parseFloat(saborForm.preco)
 					};
 
@@ -108,7 +124,7 @@ const Modals = ({
 					try {
 						const method = modal.data ? 'PUT' : 'POST';
 						const url = modal.data ? `http://localhost:8080/api/sabores/${modal.data.id}` : 'http://localhost:8080/api/sabores';
-						
+
 						const response = await fetch(url, {
 							method: method,
 							headers: { 'Content-Type': 'application/json' },
@@ -151,7 +167,7 @@ const Modals = ({
 					try {
 						const method = modal.data ? 'PUT' : 'POST';
 						const url = modal.data ? `http://localhost:8080/api/ingredientes/${modal.data.id}` : 'http://localhost:8080/api/ingredientes';
-						
+
 						const response = await fetch(url, {
 							method: method,
 							headers: { 'Content-Type': 'application/json' },
@@ -205,7 +221,7 @@ const Modals = ({
 		try {
 			const method = modal.data ? 'PUT' : 'POST';
 			const url = modal.data ? `http://localhost:8080/api/ingredientes/${modal.data.id}` : 'http://localhost:8080/api/ingredientes';
-			
+
 			const response = await fetch(url, {
 				method: method,
 				headers: { 'Content-Type': 'application/json' },
@@ -348,30 +364,31 @@ const Modals = ({
 						{modal.type === 'ingrediente' && (modal.data ? 'Editar Ingrediente' : 'Novo Ingrediente')}
 						{modal.type === 'aprovar-funcionario' && 'Aprovar Cadastro de Funcionário'}
 						{modal.type === 'recusar-funcionario' && 'Recusar Solicitação'}
+						{modal.type === 'editar-perfil-funcionario' && 'Editar Perfil'}
 						{['borda'].includes(modal.type) && 'Funcionalidade em construção'}
 					</h3>
-					<button onClick={closeModal} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
+					<button onClick={closeModal} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
 				</div>
 
 				<div className="p-6 overflow-y-auto">
-						<div className="p-6 overflow-y-auto">
-							{mensagemSucesso && (
-								<div className="mb-4 flex items-center gap-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-2 animate-fade-in">
-									<CheckCircle2 size={16} />
-									{mensagemSucesso}
-								</div>
-							)}
+					<div className="p-6 overflow-y-auto">
+						{mensagemSucesso && (
+							<div className="mb-4 flex items-center gap-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-2 animate-fade-in">
+								<CheckCircle2 size={16} />
+								{mensagemSucesso}
+							</div>
+						)}
 						{modal.type === 'sabor' && (
 							<div className="space-y-4">
 								<div>
 									<label className="block text-sm font-medium text-gray-700 mb-1">Nome da Pizza *</label>
-									<input 
-										type="text" 
+									<input
+										type="text"
 										ref={nomeInputRef}
-										value={saborForm.nome} 
-										onChange={e=>setSaborForm({...saborForm, nome: e.target.value})} 
+										value={saborForm.nome}
+										onChange={e => setSaborForm({ ...saborForm, nome: e.target.value })}
 										onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveSabor(); } }}
-										className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" 
+										className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors"
 										placeholder="Ex: Bacon com Cheddar"
 									/>
 								</div>
@@ -382,7 +399,7 @@ const Modals = ({
 											const isChecked = saborForm.ingredientes.some(i => (i.id || i) === ing.id);
 											return (
 												<label key={ing.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-													<input type="checkbox" checked={isChecked} onChange={() => toggleIngredienteNoSabor(ing.id)} className="text-red-600 focus:ring-red-600 rounded"/>
+													<input type="checkbox" checked={isChecked} onChange={() => toggleIngredienteNoSabor(ing.id)} className="text-red-600 focus:ring-red-600 rounded" />
 													{ing.nome}
 												</label>
 											);
@@ -391,7 +408,7 @@ const Modals = ({
 								</div>
 								<div>
 									<label className="block text-sm font-medium text-gray-700 mb-1">Preço Base (R$) *</label>
-									<input type="number" step="0.01" value={saborForm.preco} onChange={e=>setSaborForm({...saborForm, preco: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" placeholder="0.00"/>
+									<input type="number" step="0.01" value={saborForm.preco} onChange={e => setSaborForm({ ...saborForm, preco: e.target.value })} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" placeholder="0.00" />
 								</div>
 							</div>
 						)}
@@ -400,13 +417,13 @@ const Modals = ({
 							<div className="space-y-4">
 								<div>
 									<label className="block text-sm font-medium text-gray-700 mb-1">Nome do Ingrediente *</label>
-									<input 
-										type="text" 
+									<input
+										type="text"
 										ref={nomeInputRef}
-										value={ingredienteForm.nome} 
-										onChange={e=>setIngredienteForm({...ingredienteForm, nome: e.target.value})} 
+										value={ingredienteForm.nome}
+										onChange={e => setIngredienteForm({ ...ingredienteForm, nome: e.target.value })}
 										onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveIngrediente(); } }}
-										className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" 
+										className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors"
 										placeholder="Ex: Queijo Mussarela"
 									/>
 								</div>
@@ -468,11 +485,41 @@ const Modals = ({
 								</p>
 							</div>
 						)}
+
+						{modal.type === 'editar-perfil-funcionario' && (
+							<div className="space-y-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+									<input type="text" value={perfilForm.nome} onChange={(e) => setPerfilForm({ ...perfilForm, nome: e.target.value })} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" />
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">E-mail (login)</label>
+									<input type="email" value={perfilForm.login} onChange={(e) => setPerfilForm({ ...perfilForm, login: e.target.value })} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" />
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+									<input type="text" value={perfilForm.telefone} onChange={(e) => setPerfilForm({ ...perfilForm, telefone: e.target.value })} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" />
+								</div>
+								<div className="grid grid-cols-2 gap-4">
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-1">Nova senha</label>
+										<input type="password" value={perfilForm.senha} onChange={(e) => setPerfilForm({ ...perfilForm, senha: e.target.value })} placeholder="Deixe em branco p/ não alterar" className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" />
+									</div>
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
+										<input type="password" value={perfilForm.confirmarSenha} onChange={(e) => setPerfilForm({ ...perfilForm, confirmarSenha: e.target.value })} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-red-600 transition-colors" />
+									</div>
+								</div>
+								{erroPerfil && (
+									<div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">{erroPerfil}</div>
+								)}
+							</div>
+						)}
 					</div>
 
 					<div className="p-6 border-t border-gray-100 flex gap-3 justify-end bg-gray-50">
 						<button onClick={closeModal} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-200 rounded-xl transition-colors">Cancelar</button>
-						
+
 						{modal.type === 'sabor' && <button onClick={handleSaveSabor} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Salvar Sabor</button>}
 						{modal.type === 'ingrediente' && <button onClick={handleSaveIngrediente} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Salvar Ingrediente</button>}
 						{modal.type === 'estado-pedido' && <button onClick={handleUpdateStatus} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm">Atualizar Estado</button>}
@@ -480,6 +527,7 @@ const Modals = ({
 						{modal.type === 'detalhes-pedido' && <button onClick={closeModal} className="px-5 py-2.5 bg-gray-900 hover:bg-black text-white font-medium rounded-xl transition-colors">Fechar</button>}
 						{modal.type === 'aprovar-funcionario' && <button onClick={handleAprovarFuncionario} className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors shadow-sm">Sim, aprovar</button>}
 						{modal.type === 'recusar-funcionario' && <button onClick={handleRecusarFuncionario} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm">Sim, recusar</button>}
+						{modal.type === 'editar-perfil-funcionario' && <button onClick={handleSalvarPerfilFuncionario} disabled={salvandoPerfil} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-medium rounded-xl transition-colors shadow-sm">{salvandoPerfil ? 'Salvando...' : 'Salvar Alterações'}</button>}
 					</div>
 				</div>
 			</div>
@@ -487,8 +535,8 @@ const Modals = ({
 	);
 };
 
-export default function PainelFuncionario({ 
-	isGerente = false, 
+export default function PainelFuncionario({
+	isGerente = false,
 	perfil = {
 		nome: 'João Pereira',
 		inicial: 'J',
@@ -502,7 +550,7 @@ export default function PainelFuncionario({
 		genero: 'Masculino',
 		setor: 'Cozinha'
 	},
-	onLogout = () => {}
+	onLogout = () => { }
 } = {}) {
 	const [currentPage, setCurrentPage] = useState('pedidos');
 	const [modal, setModal] = useState({ isOpen: false, type: null, data: null });
@@ -521,6 +569,21 @@ export default function PainelFuncionario({
 	const [funcionariosAtivos, setFuncionariosAtivos] = useState([]);
 	const [funcionariosPendentes, setFuncionariosPendentes] = useState([]);
 	const [searchFuncionarios, setSearchFuncionarios] = useState('');
+
+	const [perfilOverride, setPerfilOverride] = useState(null);
+	const perfilExibido = perfilOverride || perfil;
+	const usuarioRaw = getUsuarioLogado();
+
+	const handlePerfilAtualizado = (atualizado) => {
+		salvarUsuarioLogado(atualizado);
+		setPerfilOverride({
+			...perfilExibido,
+			nome: atualizado.nome,
+			email: atualizado.login,
+			telefone: atualizado.telefone,
+			inicial: atualizado.nome ? atualizado.nome.charAt(0).toUpperCase() : perfilExibido.inicial
+		});
+	};
 
 	useEffect(() => {
 		const carregarDadosDoPainel = async () => {
@@ -575,6 +638,56 @@ export default function PainelFuncionario({
 		return colors[estado] || 'bg-gray-100 text-gray-800';
 	};
 
+	const handleSalvarPerfilFuncionario = async () => {
+		if (!perfilForm.nome || !perfilForm.login || !perfilForm.telefone) {
+			setErroPerfil('Preencha nome, e-mail e telefone.');
+			return;
+		}
+		if (perfilForm.senha && perfilForm.senha.length < 6) {
+			setErroPerfil('A nova senha deve ter pelo menos 6 caracteres.');
+			return;
+		}
+		if (perfilForm.senha && perfilForm.senha !== perfilForm.confirmarSenha) {
+			setErroPerfil('As senhas não coincidem.');
+			return;
+		}
+
+		const payload = {
+			nome: perfilForm.nome,
+			login: perfilForm.login,
+			telefone: perfilForm.telefone,
+			genero: perfilFuncionario?.genero,
+			funcao: perfilFuncionario?.funcao,
+			setor: perfilFuncionario?.setor
+		};
+		if (perfilForm.senha) payload.senha = perfilForm.senha;
+
+		setSalvandoPerfil(true);
+		setErroPerfil('');
+		try {
+			const response = await fetch(`http://localhost:8080/api/funcionarios/${perfilFuncionario.cpf}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload)
+			});
+
+			if (response.ok) {
+				const atualizado = await response.json();
+				onPerfilAtualizado(atualizado);
+				closeModal();
+			} else if (response.status === 409) {
+				setErroPerfil('Já existe um cadastro com este e-mail.');
+			} else {
+				setErroPerfil('Não foi possível salvar as alterações.');
+			}
+		} catch (erro) {
+			console.error(erro);
+			setErroPerfil('Falha de conexão com a API.');
+		} finally {
+			setSalvandoPerfil(false);
+		}
+	};
+
 	const handleToggleEstoque = async (ingrediente) => {
 		const novaDisponibilidade = !ingrediente.disponivel;
 		try {
@@ -583,7 +696,7 @@ export default function PainelFuncionario({
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ disponivel: novaDisponibilidade })
 			});
-			
+
 			if (res.ok) {
 				setIngredientes(ingredientes.map(i => i.id === ingrediente.id ? { ...i, disponivel: novaDisponibilidade } : i));
 			} else {
@@ -601,10 +714,10 @@ export default function PainelFuncionario({
 
 	return (
 		<div className="min-h-screen bg-gray-50/50 font-sans text-gray-900">
-			
+
 			<header className="sticky top-0 z-40 bg-red-700 text-white shadow-md">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center h-16">
-					
+
 					<div className="flex items-center gap-3">
 						<div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-red-700 font-serif font-bold italic text-lg shadow-sm">DV</div>
 						<div className="hidden sm:block">
@@ -633,18 +746,18 @@ export default function PainelFuncionario({
 
 					<div className="flex items-center gap-4">
 						<div onClick={() => setCurrentPage('perfil')} className="flex items-center gap-3 bg-black/10 hover:bg-black/20 px-3 py-1.5 rounded-full cursor-pointer transition-colors">
-							<div className="w-8 h-8 bg-white text-red-700 rounded-full flex items-center justify-center font-bold text-sm">{perfil.inicial}</div>
+							<div className="w-8 h-8 bg-white text-red-700 rounded-full flex items-center justify-center font-bold text-sm">{perfilExibido.inicial}</div>
 							<div className="hidden lg:block text-sm">
-								<div className="font-semibold leading-none">{perfil.nome}</div>
-								<div className="text-[11px] text-red-100 mt-0.5">{perfil.tipoLabel}</div>
+								<div className="font-semibold leading-none">{perfilExibido.nome}</div>
+								<div className="text-[11px] text-red-100 mt-0.5">{perfilExibido.tipoLabel}</div>
 							</div>
 						</div>
-						<button onClick={onLogout}	className="p-2 text-red-100 hover:text-white hover:bg-white/10 rounded-full transition-colors"	title="Sair">
-						<LogOut size={20} />
+						<button onClick={onLogout} className="p-2 text-red-100 hover:text-white hover:bg-white/10 rounded-full transition-colors" title="Sair">
+							<LogOut size={20} />
 						</button>
 					</div>
 				</div>
-				
+
 				<nav className="md:hidden flex w-full border-t border-red-600/50 bg-red-700 overflow-x-auto">
 					{['pedidos', 'sabores', 'bordas', 'estoque', ...(isGerente ? ['funcionarios'] : [])].map(tab => (
 						<button
@@ -673,9 +786,9 @@ export default function PainelFuncionario({
 									<div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center">
 										<div className="relative flex-1 max-w-md">
 											<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-											<input 
-												type="text" 
-												placeholder="Buscar por cliente ou item..." 
+											<input
+												type="text"
+												placeholder="Buscar por cliente ou item..."
 												value={searchPedidos}
 												onChange={(e) => setSearchPedidos(e.target.value)}
 												className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-red-600 focus:ring-4 focus:ring-red-600/10 transition-all text-sm"
@@ -734,7 +847,7 @@ export default function PainelFuncionario({
 									<div className="p-4 border-b border-gray-100 bg-gray-50">
 										<div className="relative max-w-md">
 											<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-											<input 
+											<input
 												type="text" placeholder="Buscar sabor..." value={searchSabores} onChange={(e) => setSearchSabores(e.target.value)}
 												className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-red-600 focus:ring-4 focus:ring-red-600/10 transition-all text-sm"
 											/>
@@ -817,7 +930,7 @@ export default function PainelFuncionario({
 									<div className="p-4 border-b border-gray-100 bg-gray-50">
 										<div className="relative max-w-md">
 											<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-											<input 
+											<input
 												type="text" placeholder="Buscar ingrediente..." value={searchIngredientes} onChange={(e) => setSearchIngredientes(e.target.value)}
 												className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-red-600 focus:ring-4 focus:ring-red-600/10 transition-all text-sm"
 											/>
@@ -836,9 +949,9 @@ export default function PainelFuncionario({
 												<tr key={i.id} className="hover:bg-gray-50 transition-colors">
 													<td className="p-4 px-6 font-bold text-gray-900">{i.nome}</td>
 													<td className="p-4 px-6 text-center">
-														{i.disponivel 
-															? <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800"><CheckCircle2 size={12} className="mr-1"/> Disponível</span>
-															: <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800"><XCircle size={12} className="mr-1"/> Em falta</span>
+														{i.disponivel
+															? <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800"><CheckCircle2 size={12} className="mr-1" /> Disponível</span>
+															: <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800"><XCircle size={12} className="mr-1" /> Em falta</span>
 														}
 													</td>
 													<td className="p-4 px-6 text-right space-x-2">
@@ -908,7 +1021,7 @@ export default function PainelFuncionario({
 										<div className="p-4 border-b border-gray-100 bg-gray-50">
 											<div className="relative max-w-md">
 												<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-												<input 
+												<input
 													type="text" placeholder="Buscar funcionário..." value={searchFuncionarios} onChange={(e) => setSearchFuncionarios(e.target.value)}
 													className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-red-600 focus:ring-4 focus:ring-red-600/10 transition-all text-sm"
 												/>
@@ -958,23 +1071,23 @@ export default function PainelFuncionario({
 								</div>
 								<div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
 									<div className="flex items-center gap-6 border-b border-gray-100 pb-8 mb-8">
-										<div className="w-20 h-20 rounded-full bg-red-100 text-red-700 flex items-center justify-center text-3xl font-bold">{perfil.inicial}</div>
+										<div className="w-20 h-20 rounded-full bg-red-100 text-red-700 flex items-center justify-center text-3xl font-bold">{perfilExibido.inicial}</div>
 										<div>
-											<h2 className="text-2xl font-bold text-gray-900">{perfil.nome}</h2>
-											<p className="text-gray-500 font-medium">{perfil.cargo}</p>
+											<h2 className="text-2xl font-bold text-gray-900">{perfilExibido.nome}</h2>
+											<p className="text-gray-500 font-medium">{perfilExibido.cargo}</p>
 										</div>
 									</div>
 									<div className="space-y-6">
 										{[
-											{ label: 'Nome', value: perfil.nome, edit: true }, 
-											{ label: 'E-mail (Login)', value: perfil.email, edit: true },
+											{ label: 'Nome', value: perfilExibido.nome, edit: true },
+											{ label: 'E-mail (Login)', value: perfilExibido.email, edit: true },
 											{ label: 'Senha', value: '••••••••', edit: true },
-											{ label: 'CPF', value: perfil.cpf }, 
-											{ label: 'Telefone', value: perfil.telefone, edit: true },
-											{ label: 'Data de Nascimento', value: perfil.dataNascimento },
-											{ label: 'RG', value: perfil.rg },
-											{ label: 'Gênero', value: perfil.genero },
-											{ label: 'Setor', value: perfil.setor }
+											{ label: 'CPF', value: perfilExibido.cpf },
+											{ label: 'Telefone', value: perfilExibido.telefone, edit: true },
+											{ label: 'Data de Nascimento', value: perfilExibido.dataNascimento },
+											{ label: 'RG', value: perfilExibido.rg },
+											{ label: 'Gênero', value: perfilExibido.genero },
+											{ label: 'Setor', value: perfilExibido.setor }
 										].map((info, idx) => (
 											<div key={idx} className="flex justify-between items-center">
 												<div>
@@ -982,7 +1095,7 @@ export default function PainelFuncionario({
 													<div className="text-base text-gray-900 mt-1">{info.value}</div>
 												</div>
 												{info.edit && (
-													<button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
+													<button onClick={() => openModal('editar-perfil-funcionario')} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
 														<Edit2 size={18} />
 													</button>
 												)}
@@ -996,8 +1109,8 @@ export default function PainelFuncionario({
 				)}
 			</main>
 
-			<Modals 
-				modal={modal} 
+			<Modals
+				modal={modal}
 				closeModal={closeModal}
 				sabores={sabores} setSabores={setSabores}
 				bordas={bordas} setBordas={setBordas}
@@ -1005,8 +1118,9 @@ export default function PainelFuncionario({
 				pedidos={pedidos} setPedidos={setPedidos}
 				funcionariosAtivos={funcionariosAtivos} setFuncionariosAtivos={setFuncionariosAtivos}
 				funcionariosPendentes={funcionariosPendentes} setFuncionariosPendentes={setFuncionariosPendentes}
+				perfilFuncionario={{ ...perfilExibido, cpf: usuarioRaw?.cpf, funcao: usuarioRaw?.funcao }}
+				onPerfilAtualizado={handlePerfilAtualizado}
 			/>
-
 		</div>
 	);
 }
