@@ -1,5 +1,4 @@
 // src/components/PainelFuncionario.jsx
-import { getUsuarioLogado, salvarUsuarioLogado } from '../utils/auth';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
 	ClipboardList,
@@ -17,7 +16,8 @@ import {
 	Users,
 	Clock
 } from 'lucide-react';
-import { montarPerfilFuncionario, salvarUsuarioLogado } from '../utils/auth';
+import { montarPerfilFuncionario, getUsuarioLogado, salvarUsuarioLogado } from '../utils/auth';
+
 
 const Modals = ({
 	modal,
